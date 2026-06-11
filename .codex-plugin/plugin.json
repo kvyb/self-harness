@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "Self-Harness",
     "shortDescription": "Improve agent harnesses with simulated users.",
-    "longDescription": "Runs a paper-grounded Self-Harness workflow inside target repos: infer harness purpose, confirm audience, simulate representative AI users, mine traces, propose code changes, and validate owner-approved changes.",
+    "longDescription": "Runs a paper-grounded Self-Harness workflow inside target repos: the host agent reasons from repo evidence, confirms audience, simulates representative AI users, mines traces, proposes code changes, and validates owner-approved changes.",
     "developerName": "kvyb",
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Code Review", "Testing"],
@@ -26,4 +26,3 @@
     ]
   }
 }
-

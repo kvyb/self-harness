@@ -8,7 +8,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from self_harness.discovery import discover
 from self_harness.io import (
     ArtifactError,
     artifact_path,
@@ -30,7 +29,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="self-harness")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("init")
-    sub.add_parser("discover")
     confirm = sub.add_parser("confirm-audience")
     confirm.add_argument("--by", default="owner")
     sim = sub.add_parser("create-sim-clusters")
@@ -47,8 +45,6 @@ def main() -> None:
     try:
         if args.command == "init":
             run_init(repo)
-        elif args.command == "discover":
-            run_discover(repo)
         elif args.command == "confirm-audience":
             run_confirm_audience(repo, args.by)
         elif args.command == "create-sim-clusters":
@@ -73,30 +69,10 @@ def run_init(repo: Path) -> None:
         "Local artifacts for Self-Harness simulations, trace mining, proposals, and validation.\n",
         encoding="utf-8",
     )
+    write_json(base / "intent.template.json", _intent_template())
+    (base / "audience-confirmation.md").write_text(_audience_confirmation_template(), encoding="utf-8")
     (base / "lineage.jsonl").touch()
     print(f"initialized {base}")
-
-
-def run_discover(repo: Path) -> None:
-    intent = discover(repo)
-    write_json(artifact_path("intent.json", repo=repo), intent.to_dict())
-    lines = [
-        "# Harness Intent",
-        "",
-        f"- Purpose: {intent.purpose}",
-        f"- Confidence: {intent.confidence}",
-        f"- Audiences: {', '.join(intent.audiences)}",
-        f"- Entry points: {', '.join(intent.entrypoints[:12]) or 'unknown'}",
-        f"- Editable surfaces: {', '.join(intent.editable_surfaces[:12]) or 'unknown'}",
-    ]
-    if intent.questions:
-        lines.extend(["", "## Owner Questions", *[f"- {question}" for question in REQUIRED_QUESTIONS]])
-    artifact_path("intent.md", repo=repo).write_text("\n".join(lines) + "\n", encoding="utf-8")
-    artifact_path("audience-confirmation.md", repo=repo).write_text(
-        _audience_confirmation_markdown(intent),
-        encoding="utf-8",
-    )
-    print(f"wrote {artifact_path('intent.json', repo=repo)}")
 
 
 def run_create_sim_clusters(repo: Path, mode: str) -> None:
@@ -162,36 +138,44 @@ def run_confirm_audience(repo: Path, confirmed_by: str) -> None:
             "audiences_confirmed": True,
             "confirmed_by": confirmed_by,
             "corrections": [],
-            "note": "Owner confirmed inferred audience portraits before simulation suite generation.",
+            "note": "Owner confirmed agent-authored audience portraits before simulation suite generation.",
         },
     )
     print(f"wrote {path}")
 
 
-def _audience_confirmation_markdown(intent: HarnessIntent) -> str:
-    lines = [
-        "# Audience Confirmation",
-        "",
-        "Before running live simulations, confirm these are the right end-user portraits.",
-        "",
-        f"- Harness purpose: {intent.purpose}",
-        "",
-        "## Proposed Portraits",
-        "",
-    ]
-    for portrait in intent.audience_portraits:
-        lines.extend(
-            [
-                f"### {portrait['name']}",
-                "",
-                f"- Audience: {portrait['audience']}",
-                f"- Hidden goal: {portrait['hidden_goal']}",
-                f"- Pressure: {portrait['pressure']}",
-                "",
-            ]
-        )
-    lines.extend(
+def _intent_template() -> dict[str, object]:
+    return {
+        "purpose": "HOST_AGENT_FILL_FROM_REPO_EVIDENCE",
+        "value": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
+        "audiences": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
+        "target_failures": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
+        "entrypoints": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
+        "editable_surfaces": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
+        "confidence": 0.0,
+        "audience_portraits": [
+            {
+                "name": "HOST_AGENT_FILL",
+                "audience": "HOST_AGENT_FILL",
+                "hidden_goal": "HOST_AGENT_FILL",
+                "pressure": "HOST_AGENT_FILL",
+            }
+        ],
+        "questions": REQUIRED_QUESTIONS,
+    }
+
+
+def _audience_confirmation_template() -> str:
+    return "\n".join(
         [
+            "# Audience Confirmation",
+            "",
+            "Host agent: fill this from your repo inspection before live simulation.",
+            "",
+            "## Proposed Portraits",
+            "",
+            "- TODO: audience, hidden goal, pressure, success criteria",
+            "",
             "## Owner Decision",
             "",
             "- [ ] Confirm these portraits",
@@ -200,8 +184,7 @@ def _audience_confirmation_markdown(intent: HarnessIntent) -> str:
             "",
             "Do not run expensive live simulations until this is confirmed.",
         ]
-    )
-    return "\n".join(lines) + "\n"
+    ) + "\n"
 
 
 if __name__ == "__main__":

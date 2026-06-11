@@ -5,35 +5,26 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
-from self_harness.discovery import discover
+from self_harness.cli import run_init
 from self_harness.mining import cluster_failures
-from self_harness.models import TraceRecord
+from self_harness.models import HarnessIntent, TraceRecord
 from self_harness.simulations import create_clusters, create_suite
 from self_harness.traces import normalize_trace
 from self_harness.validation import validation_decision
 
 
 class SelfHarnessTests(unittest.TestCase):
-    def test_discovery_infers_unclear_repo_questions(self) -> None:
-        with tempfile.TemporaryDirectory() as dirname:
-            intent = discover(Path(dirname))
-        self.assertLess(intent.confidence, 0.65)
-        self.assertTrue(intent.questions)
-        self.assertTrue(intent.audience_portraits)
-
-    def test_discovery_infers_audience_portraits_from_repo_text(self) -> None:
+    def test_init_scaffolds_agent_authored_intent_template(self) -> None:
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname)
-            (path / "README.md").write_text(
-                "A workflow agent for expert operators with memory continuity.",
-                encoding="utf-8",
-            )
-            intent = discover(path)
-        self.assertIn("expert operators", intent.audiences)
-        self.assertTrue(intent.audience_portraits)
+            run_init(path)
+            base = path / ".self-harness"
+            self.assertTrue((base / "intent.template.json").exists())
+            self.assertTrue((base / "audience-confirmation.md").exists())
+            self.assertFalse((base / "intent.json").exists())
 
     def test_simulation_clusters_include_heldout(self) -> None:
-        intent = discover(Path.cwd())
+        intent = _sample_intent()
         clusters = create_clusters(intent, mode="standard")
         self.assertTrue(clusters)
         self.assertTrue(any(cluster.heldout for cluster in clusters))
@@ -41,7 +32,7 @@ class SelfHarnessTests(unittest.TestCase):
         self.assertTrue(all("Hidden goal:" in cluster.portrait for cluster in clusters))
 
     def test_simulation_suite_contains_runnable_cases(self) -> None:
-        intent = discover(Path.cwd())
+        intent = _sample_intent()
         suite = create_suite(intent, mode="quick")
         self.assertTrue(suite["cases"])
         self.assertTrue(any(case["split"] == "held_out" for case in suite["cases"]))
@@ -98,6 +89,27 @@ class SelfHarnessTests(unittest.TestCase):
     def test_invalid_split_is_rejected(self) -> None:
         with self.assertRaisesRegex(Exception, "invalid split"):
             normalize_trace({"verifier_result": "pass", "split": "train"}, index=0)
+
+
+def _sample_intent() -> HarnessIntent:
+    return HarnessIntent(
+        purpose="workflow agent for expert operators",
+        value=["complete operator task reliably"],
+        audiences=["expert operators"],
+        target_failures=["missed tool evidence"],
+        entrypoints=["pyproject:eval:evaluate"],
+        editable_surfaces=["src/agent/prompts.py"],
+        confidence=0.8,
+        audience_portraits=[
+            {
+                "name": "expert_operator",
+                "audience": "expert operators",
+                "hidden_goal": "complete high-stakes workflow under time pressure",
+                "pressure": "low patience, high domain knowledge, asks precise follow-ups",
+            }
+        ],
+        questions=[],
+    )
 
 
 if __name__ == "__main__":

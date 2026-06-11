@@ -2,7 +2,7 @@
 
 Self-Harness is a portable agent skill for improving agent harnesses with live simulated users and trace-grounded proposals.
 
-Invoke it inside any repo with Claude Code, Codex, Hermes, or another coding agent. The skill guides the agent to inspect the harness, identify who it serves, confirm that audience with the owner, run representative AI end users through the real harness, mine the traces, and propose concrete code changes.
+Invoke it inside any repo with Claude Code, Codex, Hermes, or another coding agent. The host agent, not a hardcoded discovery script, inspects the harness, identifies who it serves, confirms that audience with the owner, runs representative AI end users through the real harness, mines the traces, and proposes concrete code changes.
 
 The workflow is based on the paper [Self-Harness: Harnesses That Improve Themselves](https://arxiv.org/abs/2606.09498). It applies the paper's loop to real product harnesses: **Weakness Mining -> Harness Proposal -> Proposal Validation**.
 
@@ -12,7 +12,7 @@ Agent harness owners usually know the symptom: the agent feels brittle, generic,
 
 Self-Harness gives you a repeatable way to:
 
-- discover what the harness is supposed to do
+- reason from the repo about what the harness is supposed to do
 - identify the real users, customers, contacts, or operators it must serve
 - simulate those users live against the real harness
 - collect logs, traces, transcripts, tool calls, and state evidence
@@ -24,8 +24,8 @@ All run artifacts stay inside the target repo under `.self-harness/`.
 
 ## How It Works
 
-1. **Explore the repo**: read docs, code, tests, routes, scripts, env examples, observability config, and existing evals.
-2. **Confirm the audience**: infer ideal user/customer/contact/operator profiles, then ask the owner to confirm or correct them before simulations.
+1. **Explore the repo**: the host agent reads docs, code, tests, routes, scripts, env examples, observability config, and existing evals, then writes `.self-harness/intent.json` from evidence.
+2. **Confirm the audience**: propose evidence-backed user/customer/contact/operator profiles, then ask the owner to confirm or correct them before simulations.
 3. **Create simulation clusters**: build representative AI users across goals, patience, trust, domain knowledge, ambiguity, memory pressure, tool pressure, and escalation patterns.
 4. **Run live simulations**: drive the real harness through API, CLI, browser, webhook, worker, local app, or existing eval entrypoints.
 5. **Mine weaknesses**: cluster failed traces by `phi(trace) = (terminal_cause, causal_status, agent_mechanism)`.
@@ -39,7 +39,9 @@ From a target harness repo:
 ```bash
 # with this repo cloned somewhere locally
 python3 /path/to/self-harness/tools/self_harness/cli.py init
-python3 /path/to/self-harness/tools/self_harness/cli.py discover
+# host agent now inspects repo and writes .self-harness/intent.json
+# after owner confirms .self-harness/audience-confirmation.md
+python3 /path/to/self-harness/tools/self_harness/cli.py confirm-audience --by owner
 python3 /path/to/self-harness/tools/self_harness/cli.py create-sim-clusters
 ```
 

@@ -2,7 +2,7 @@
 name: self-harness
 description: >
   Use when improving, evaluating, or stress-testing an agent harness. Guides the host agent to
-  inspect the target repo, infer and confirm end-user audience, run live AI user/contact/operator
+  inspect the target repo, reason from evidence to identify and confirm end-user audience, run live AI user/contact/operator
   simulations through the real harness, mine traces using the Self-Harness paper method, propose
   code changes, and validate owner-approved changes. Works across Claude Code, Codex, Hermes, and
   other coding agents.
@@ -25,7 +25,7 @@ Follow the paper loop exactly:
 ## Workflow
 
 1. Inspect repo docs/code/tests/evals/routes/CLI/env examples before asking questions.
-2. Infer `HarnessIntent`: purpose, audience, value, hard failures, entrypoints, observability, editable surfaces.
+2. As the host agent, reason from repo evidence and author `.self-harness/intent.json`: purpose, audience, value, hard failures, entrypoints, observability, editable surfaces. Do not rely on a generic discovery script to decide this.
 3. If intent is unclear, ask exactly:
    - What is this harness intended for?
    - What value should it deliver?
@@ -44,13 +44,14 @@ Follow the paper loop exactly:
 ## Critical Rules
 
 - Simulations are mandatory. Observability traces supplement them; they do not replace live end-user simulation.
-- Audience confirmation is mandatory before expensive live simulations. If the inferred users are wrong, stop and correct portraits first.
+- Audience confirmation is mandatory before expensive live simulations. If the agent-authored user portraits are wrong, stop and correct portraits first.
 - Simulator and judge must be separate. Simulator acts like a real user/contact/operator and does not see judge rubric.
 - Held-out cases must not enter proposal context.
 - Keep model, evaluator, tools, budget, and environment fixed between baseline and candidate validation.
 - Never claim a proposal is validated before rerunning candidate harness.
 - Prefer deterministic verifiers. If using LLM-as-judge, freeze prompt/model/config and record them.
 - Do not create generic prompt bloat. Every proposal needs trace evidence, target mechanism, edited surface, expected behavior, and regression risk.
+- Discovery is agent reasoning work. Scripts may scaffold templates and validate artifacts, but they must not replace repo-specific understanding.
 
 ## Helper Tools
 
@@ -58,7 +59,7 @@ If this repo is available locally, helper tools can scaffold artifacts:
 
 ```bash
 python3 /path/to/self-harness/tools/self_harness/cli.py init
-python3 /path/to/self-harness/tools/self_harness/cli.py discover
+# host agent inspects the repo and writes .self-harness/intent.json
 python3 /path/to/self-harness/tools/self_harness/cli.py confirm-audience --by owner
 python3 /path/to/self-harness/tools/self_harness/cli.py create-sim-clusters
 python3 /path/to/self-harness/tools/self_harness/cli.py cluster-failures
