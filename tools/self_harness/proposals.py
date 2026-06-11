@@ -13,6 +13,8 @@ def propose(clusters: list[FailureCluster], intent: HarnessIntent) -> list[Propo
         proposals.append(
             ProposalBundle(
                 proposal_id=f"proposal-{index:03d}",
+                mode=intent.mode,
+                proposer=intent.proposer,
                 failure_cluster_id=cluster.failure_cluster_id,
                 evidence_trace_ids=cluster.representative_trace_ids,
                 editable_surface=surface,
@@ -66,6 +68,8 @@ def proposals_markdown(proposals: list[ProposalBundle]) -> str:
             [
                 f"## {proposal.proposal_id}",
                 "",
+                f"- Mode: `{proposal.mode}`",
+                f"- Proposer: `{proposal.proposer}`",
                 f"- Failure cluster: `{proposal.failure_cluster_id}`",
                 f"- Evidence: `{', '.join(proposal.evidence_trace_ids)}`",
                 f"- Editable surface: `{proposal.editable_surface}`",

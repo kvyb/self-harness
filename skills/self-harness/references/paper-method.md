@@ -23,19 +23,33 @@ tau = execution trace
 
 Running `M` under `h_t` on a case produces an output and a trace. The evaluator maps that run to an outcome such as pass, fail, or unknown. Since the model and evaluator stay fixed, accepted behavior changes can be attributed to the harness edit rather than model replacement or evaluator drift.
 
+## Self-Harness vs Meta-Harness
+
+Use the labels honestly.
+
+`Self-Harness` means the target harness's own model/runtime proposes candidate edits to its own harness. The orchestrator may prepare traces, evidence bundles, validation runs, and lineage, but proposal generation comes from the same agent/model family being improved.
+
+`Meta-Harness` means an external agent, often Codex, Claude Code, Hermes, or another stronger/different coding agent, proposes edits for the target harness. This can still be useful and should still use Weakness Mining, Harness Proposal, and Proposal Validation, but it is Self-Harness-inspired rather than strict Self-Harness.
+
+Default skill invocation from a coding agent is Meta-Harness unless the target runtime/model is explicitly used as proposer.
+
+Record the mode and proposer in `intent.json`, `proposals.json`, `validation.json`, and `report.md`.
+
 ## Loop
 
 One round:
 
 1. Evaluate current harness on held-in and held-out splits.
 2. Build an evidence bundle from held-in failures.
-3. Ask the same model, in proposer role, for `K` diverse candidate harness edits.
+3. Ask the proposer for `K` diverse candidate harness edits. In Self-Harness mode this is the target model under its own harness. In Meta-Harness mode this is the external host agent.
 4. Apply each candidate as a harness variant.
 5. Rerun held-in and held-out splits with the same model, evaluator, tools, budget, and environment.
 6. Accept only candidates that improve at least one split and regress neither.
 7. Log accepted and rejected candidates in the harness lineage.
 
 In this skill, owner approval is inserted before step 4 because the target repo belongs to a human owner. Before approval, proposals are reports and suggested diffs only.
+
+For a paper-faithful run, prefer Self-Harness mode. If the host agent proposes edits, do not claim the result is strict Self-Harness.
 
 ## Weakness Mining
 
@@ -148,6 +162,8 @@ harness edit -> prompt, tool, memory, runtime, routing, verifier, or orchestrati
 ```
 
 The same invariant holds: do not tune on held-out cases, and do not call a change validated without rerunning comparable simulations.
+
+For product teams, Meta-Harness is often the practical first mode because the coding agent can inspect and edit the repo. For research-faithful evaluation, Self-Harness mode is better because it tests whether the target model can improve its own scaffold.
 
 ## Why this is required
 

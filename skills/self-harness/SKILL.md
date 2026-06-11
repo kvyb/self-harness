@@ -14,9 +14,20 @@ Use this skill inside the target repo that owns the agent harness.
 
 Self-Harness is a harness improvement workflow based on [Self-Harness: Harnesses That Improve Themselves](https://arxiv.org/abs/2606.09498). The paper treats the model as fixed and improves the non-parametric harness around it: prompts, tool policy, memory/state rules, runtime control, recovery behavior, verifier hooks, and other execution scaffolding.
 
-This skill adapts that method for arbitrary product harnesses. The host agent studies the repo, creates simulated end users, runs those users through the real harness, mines trace failures, proposes narrow harness edits, and validates approved changes with held-in and held-out simulations.
+This skill adapts that method for arbitrary product harnesses. In strict paper-faithful Self-Harness mode, the target harness's own model/runtime proposes edits to its own harness. In default Meta-Harness mode, the external host agent, such as Codex, Claude Code, or Hermes, proposes edits for the target harness while keeping the paper's trace mining and validation discipline.
 
 Do not turn this into a standalone optimizer. Do not use a generic discovery script to decide what the harness is for. The host agent must reason from repo evidence and owner answers.
+
+## Mode declaration
+
+Declare the mode before proposals:
+
+- `self-harness`: the target harness's own model/runtime proposes candidate edits. The host agent only orchestrates simulations, evidence bundles, validation, and lineage. This is closest to the paper.
+- `meta-harness`: an external host agent proposes candidate edits for the target harness. This is the default when this skill is invoked from Codex, Claude Code, or Hermes.
+
+Prefer `self-harness` mode when the target runtime can safely propose harness edits. If that is not possible, use `meta-harness` mode and say so in `.self-harness/intent.json`, `.self-harness/proposals.md`, and `.self-harness/report.md`.
+
+For paper-faithful runs, keep proposal generation on the same model and harness configuration that will run in production, or explain why a different proposer was used.
 
 ## End goal
 
@@ -77,7 +88,7 @@ Common artifacts:
 ## Required workflow
 
 1. Inspect repo docs, code, tests, evals, routes, CLI commands, workers, env examples, observability config, and existing traces before asking questions.
-2. Author `.self-harness/intent.json` from evidence. Include purpose, value, audiences, audience portraits, hard failures, entrypoints, observability sources, editable surfaces, confidence, and unresolved questions.
+2. Author `.self-harness/intent.json` from evidence. Include mode, proposer identity, purpose, value, audiences, audience portraits, hard failures, entrypoints, observability sources, editable surfaces, confidence, and unresolved questions.
 3. If the purpose, value, or hard cases are unclear, ask exactly:
    - What is this harness intended for?
    - What value should it deliver?
@@ -171,6 +182,7 @@ Avoid generic prompt bloat. The paper's useful edits were concrete harness chang
 Before validation, freeze:
 
 - model and model settings
+- proposer identity and mode
 - evaluator or judge prompt
 - tool set and tool versions
 - budget, timeout, retry, and concurrency limits

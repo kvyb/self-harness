@@ -6,11 +6,19 @@ Use it inside the repo you want to test. Codex, Claude Code, Hermes, or another 
 
 It is not a standalone optimizer app. It does not train a model. The skill guides the host agent; helper scripts only keep the `.self-harness/` artifacts tidy.
 
-Based on [Self-Harness: Harnesses That Improve Themselves](https://arxiv.org/abs/2606.09498), using the paper loop:
+The method is based on [Self-Harness: Harnesses That Improve Themselves](https://arxiv.org/abs/2606.09498). The paper's strict setup has the target agent's own model propose edits to its own harness. This skill supports that mode, but its default use from Codex, Claude Code, or Hermes is better described as Meta-Harness: an external coding agent applies Self-Harness-style trace mining and validation to another harness.
 
 ```text
 Weakness Mining -> Harness Proposal -> Proposal Validation
 ```
+
+## Modes
+
+`self-harness`: the target harness's own runtime or model proposes candidate edits. The host agent orchestrates traces, evidence bundles, validation, and lineage. This is closest to the paper.
+
+`meta-harness`: the external host agent proposes candidate edits for the target harness. This is the default when you invoke the skill from Codex, Claude Code, or Hermes.
+
+When possible, prefer self-harness mode or use the same model family/config that runs in production. If you use a stronger or different host agent to propose changes, label the run as meta-harness.
 
 ## Why this exists
 

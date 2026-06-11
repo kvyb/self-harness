@@ -9,6 +9,8 @@ ARTIFACT_DIR = Path(".self-harness")
 
 @dataclass(frozen=True)
 class HarnessIntent:
+    mode: Literal["self-harness", "meta-harness"]
+    proposer: str
     purpose: str
     value: list[str]
     audiences: list[str]
@@ -103,6 +105,8 @@ class FailureCluster:
 @dataclass(frozen=True)
 class ProposalBundle:
     proposal_id: str
+    mode: Literal["self-harness", "meta-harness"]
+    proposer: str
     failure_cluster_id: str
     evidence_trace_ids: list[str]
     editable_surface: str

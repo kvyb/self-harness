@@ -6,6 +6,8 @@ Artifacts live in the target repo under `.self-harness/`.
 
 ```json
 {
+  "mode": "self-harness|meta-harness",
+  "proposer": "string",
   "purpose": "string",
   "value": ["string"],
   "audiences": ["string"],
@@ -87,6 +89,8 @@ Artifacts live in the target repo under `.self-harness/`.
 ```json
 {
   "proposal_id": "string",
+  "mode": "self-harness|meta-harness",
+  "proposer": "string",
   "failure_cluster_id": "string",
   "evidence_trace_ids": [],
   "editable_surface": "string",

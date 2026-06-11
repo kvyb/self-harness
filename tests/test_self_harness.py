@@ -82,6 +82,22 @@ class SelfHarnessTests(unittest.TestCase):
         )
         self.assertFalse(decision["validated"])
 
+    def test_validation_gate_rejects_mode_mismatch(self) -> None:
+        base = {
+            "suite_id": "suite",
+            "mode": "self-harness",
+            "proposer": "target runtime",
+            "model": "model",
+            "evaluator": "eval",
+            "environment": "env",
+            "held_in": {"total": 3, "pass": 2, "fail": 1, "unknown": 0},
+            "held_out": {"total": 3, "pass": 2, "fail": 1, "unknown": 0},
+        }
+        candidate = {**base, "mode": "meta-harness", "held_in": {"total": 3, "pass": 3, "fail": 0, "unknown": 0}}
+        decision = validation_decision(base, candidate)
+        self.assertFalse(decision["validated"])
+        self.assertIn("configs differ", decision["reason"])
+
     def test_failed_trace_requires_paper_signature_fields(self) -> None:
         with self.assertRaisesRegex(Exception, "terminal_cause"):
             normalize_trace({"verifier_result": "fail", "split": "held_in"}, index=0)
@@ -93,6 +109,8 @@ class SelfHarnessTests(unittest.TestCase):
 
 def _sample_intent() -> HarnessIntent:
     return HarnessIntent(
+        mode="meta-harness",
+        proposer="test host agent",
         purpose="workflow agent for expert operators",
         value=["complete operator task reliably"],
         audiences=["expert operators"],

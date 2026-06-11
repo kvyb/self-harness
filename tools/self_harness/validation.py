@@ -30,9 +30,11 @@ def validation_decision(baseline: dict[str, Any], candidate: dict[str, Any]) -> 
     }
 
 
-def _config_key(run: dict[str, Any]) -> tuple[str, str, str, str]:
+def _config_key(run: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
     return (
         str(run.get("suite_id", "")),
+        str(run.get("mode", "")),
+        str(run.get("proposer", "")),
         str(run.get("model", "")),
         str(run.get("evaluator", "")),
         str(run.get("environment", "")),

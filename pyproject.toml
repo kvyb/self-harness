@@ -1,7 +1,7 @@
 [project]
 name = "self-harness"
 version = "0.1.0"
-description = "Portable skill helpers for Self-Harness trace mining and simulation planning."
+description = "Portable skill helpers for Self-Harness and Meta-Harness trace mining."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

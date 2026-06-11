@@ -146,6 +146,8 @@ def run_confirm_audience(repo: Path, confirmed_by: str) -> None:
 
 def _intent_template() -> dict[str, object]:
     return {
+        "mode": "meta-harness",
+        "proposer": "HOST_AGENT_FILL_WITH_SELF_OR_EXTERNAL_PROPOSER",
         "purpose": "HOST_AGENT_FILL_FROM_REPO_EVIDENCE",
         "value": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
         "audiences": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
