@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from tools.self_harness.models import FailureCluster, TraceRecord
+from self_harness.models import FailureCluster, TraceRecord
 
 
 def cluster_failures(traces: list[TraceRecord]) -> list[FailureCluster]:
@@ -23,7 +23,10 @@ def cluster_failures(traces: list[TraceRecord]) -> list[FailureCluster]:
                 trace_ids=trace_ids,
                 representative_trace_ids=trace_ids[:3],
                 support=len(trace_ids),
+                addressable=False,
+                addressability_reason=(
+                    "Requires host agent or owner to map this mechanism to one declared editable surface."
+                ),
             )
         )
     return sorted(clusters, key=lambda cluster: (-cluster.support, cluster.failure_cluster_id))
-

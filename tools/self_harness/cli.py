@@ -4,18 +4,26 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.self_harness.discovery import discover
-from tools.self_harness.io import artifact_path, ensure_artifact_dir, read_json, write_json, write_jsonl
-from tools.self_harness.mining import cluster_failures
-from tools.self_harness.models import REQUIRED_QUESTIONS, HarnessIntent
-from tools.self_harness.proposals import proposals_markdown, propose
-from tools.self_harness.simulations import create_clusters
-from tools.self_harness.traces import load_traces
-from tools.self_harness.validation import validation_decision
+from self_harness.discovery import discover
+from self_harness.io import (
+    ArtifactError,
+    artifact_path,
+    ensure_artifact_dir,
+    read_json,
+    require_artifact,
+    write_json,
+    write_jsonl,
+)
+from self_harness.mining import cluster_failures
+from self_harness.models import REQUIRED_QUESTIONS, HarnessIntent
+from self_harness.proposals import proposals_markdown, propose
+from self_harness.simulations import create_suite
+from self_harness.traces import load_traces
+from self_harness.validation import validation_decision
 
 
 def main() -> None:
@@ -23,6 +31,8 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("init")
     sub.add_parser("discover")
+    confirm = sub.add_parser("confirm-audience")
+    confirm.add_argument("--by", default="owner")
     sim = sub.add_parser("create-sim-clusters")
     sim.add_argument("--mode", choices=["quick", "standard", "exploratory"], default="standard")
     norm = sub.add_parser("normalize-traces")
@@ -34,20 +44,26 @@ def main() -> None:
     val.add_argument("--candidate", type=Path, required=True)
     args = parser.parse_args()
     repo = Path.cwd()
-    if args.command == "init":
-        run_init(repo)
-    elif args.command == "discover":
-        run_discover(repo)
-    elif args.command == "create-sim-clusters":
-        run_create_sim_clusters(repo, args.mode)
-    elif args.command == "normalize-traces":
-        run_normalize_traces(repo, args.path)
-    elif args.command == "cluster-failures":
-        run_cluster_failures(repo)
-    elif args.command == "propose-harness-edits":
-        run_propose(repo)
-    elif args.command == "validate-proposals":
-        run_validate(repo, args.baseline, args.candidate)
+    try:
+        if args.command == "init":
+            run_init(repo)
+        elif args.command == "discover":
+            run_discover(repo)
+        elif args.command == "confirm-audience":
+            run_confirm_audience(repo, args.by)
+        elif args.command == "create-sim-clusters":
+            run_create_sim_clusters(repo, args.mode)
+        elif args.command == "normalize-traces":
+            run_normalize_traces(repo, args.path)
+        elif args.command == "cluster-failures":
+            run_cluster_failures(repo)
+        elif args.command == "propose-harness-edits":
+            run_propose(repo)
+        elif args.command == "validate-proposals":
+            run_validate(repo, args.baseline, args.candidate)
+    except ArtifactError as exc:
+        print(f"self-harness: {exc}", file=sys.stderr)
+        raise SystemExit(2) from exc
 
 
 def run_init(repo: Path) -> None:
@@ -64,19 +80,42 @@ def run_init(repo: Path) -> None:
 def run_discover(repo: Path) -> None:
     intent = discover(repo)
     write_json(artifact_path("intent.json", repo=repo), intent.to_dict())
-    lines = ["# Harness Intent", "", f"- Purpose: {intent.purpose}", f"- Confidence: {intent.confidence}"]
+    lines = [
+        "# Harness Intent",
+        "",
+        f"- Purpose: {intent.purpose}",
+        f"- Confidence: {intent.confidence}",
+        f"- Audiences: {', '.join(intent.audiences)}",
+        f"- Entry points: {', '.join(intent.entrypoints[:12]) or 'unknown'}",
+        f"- Editable surfaces: {', '.join(intent.editable_surfaces[:12]) or 'unknown'}",
+    ]
     if intent.questions:
         lines.extend(["", "## Owner Questions", *[f"- {question}" for question in REQUIRED_QUESTIONS]])
     artifact_path("intent.md", repo=repo).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    artifact_path("audience-confirmation.md", repo=repo).write_text(
+        _audience_confirmation_markdown(intent),
+        encoding="utf-8",
+    )
     print(f"wrote {artifact_path('intent.json', repo=repo)}")
 
 
 def run_create_sim_clusters(repo: Path, mode: str) -> None:
+    require_artifact(repo, "intent.json")
+    confirmation = read_json(require_artifact(repo, "owner-confirmation.json"))
+    if not confirmation.get("audiences_confirmed"):
+        raise ArtifactError("owner-confirmation.json must set audiences_confirmed=true")
     payload = read_json(artifact_path("intent.json", repo=repo))
     intent = HarnessIntent(**payload)
-    clusters = create_clusters(intent, mode=mode)
-    suite = {"mode": mode, "clusters": [cluster.to_dict() for cluster in clusters]}
+    suite = create_suite(intent, mode=mode)
     write_json(artifact_path("simulation-suite.json", repo=repo), suite)
+    write_json(
+        artifact_path("held-in-suite.json", repo=repo),
+        {**suite, "cases": [case for case in suite["cases"] if case["split"] == "held_in"]},
+    )
+    write_json(
+        artifact_path("held-out-suite.json", repo=repo),
+        {**suite, "cases": [case for case in suite["cases"] if case["split"] == "held_out"]},
+    )
     print(f"wrote {artifact_path('simulation-suite.json', repo=repo)}")
 
 
@@ -87,7 +126,7 @@ def run_normalize_traces(repo: Path, path: Path) -> None:
 
 
 def run_cluster_failures(repo: Path) -> None:
-    traces = load_traces(artifact_path("traces.jsonl", repo=repo))
+    traces = load_traces(require_artifact(repo, "traces.jsonl"))
     clusters = cluster_failures(traces)
     write_json(
         artifact_path("evidence-bundle.json", repo=repo),
@@ -97,9 +136,9 @@ def run_cluster_failures(repo: Path) -> None:
 
 
 def run_propose(repo: Path) -> None:
-    intent = HarnessIntent(**read_json(artifact_path("intent.json", repo=repo)))
-    bundle = read_json(artifact_path("evidence-bundle.json", repo=repo))
-    from tools.self_harness.models import FailureCluster
+    intent = HarnessIntent(**read_json(require_artifact(repo, "intent.json")))
+    bundle = read_json(require_artifact(repo, "evidence-bundle.json"))
+    from self_harness.models import FailureCluster
 
     clusters = [FailureCluster(**item) for item in bundle.get("failure_clusters", [])]
     proposals = propose(clusters, intent)
@@ -112,6 +151,57 @@ def run_validate(repo: Path, baseline: Path, candidate: Path) -> None:
     decision = validation_decision(read_json(baseline), read_json(candidate))
     write_json(artifact_path("validation.json", repo=repo), decision)
     print(f"wrote {artifact_path('validation.json', repo=repo)}")
+
+
+def run_confirm_audience(repo: Path, confirmed_by: str) -> None:
+    require_artifact(repo, "intent.json")
+    path = artifact_path("owner-confirmation.json", repo=repo)
+    write_json(
+        path,
+        {
+            "audiences_confirmed": True,
+            "confirmed_by": confirmed_by,
+            "corrections": [],
+            "note": "Owner confirmed inferred audience portraits before simulation suite generation.",
+        },
+    )
+    print(f"wrote {path}")
+
+
+def _audience_confirmation_markdown(intent: HarnessIntent) -> str:
+    lines = [
+        "# Audience Confirmation",
+        "",
+        "Before running live simulations, confirm these are the right end-user portraits.",
+        "",
+        f"- Harness purpose: {intent.purpose}",
+        "",
+        "## Proposed Portraits",
+        "",
+    ]
+    for portrait in intent.audience_portraits:
+        lines.extend(
+            [
+                f"### {portrait['name']}",
+                "",
+                f"- Audience: {portrait['audience']}",
+                f"- Hidden goal: {portrait['hidden_goal']}",
+                f"- Pressure: {portrait['pressure']}",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Owner Decision",
+            "",
+            "- [ ] Confirm these portraits",
+            "- [ ] Edit portraits before simulation",
+            "- [ ] Replace with different audience",
+            "",
+            "Do not run expensive live simulations until this is confirmed.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":

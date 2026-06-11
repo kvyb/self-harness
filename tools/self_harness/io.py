@@ -4,12 +4,23 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tools.self_harness.models import ARTIFACT_DIR
+from self_harness.models import ARTIFACT_DIR
+
+
+class ArtifactError(RuntimeError):
+    """Raised when required Self-Harness artifacts are missing or malformed."""
 
 
 def artifact_path(name: str, *, repo: Path | None = None) -> Path:
     base = repo or Path.cwd()
     return base / ARTIFACT_DIR / name
+
+
+def require_artifact(repo: Path, name: str) -> Path:
+    path = artifact_path(name, repo=repo)
+    if not path.exists():
+        raise ArtifactError(f"required artifact missing: {path}")
+    return path
 
 
 def ensure_artifact_dir(repo: Path | None = None) -> Path:
@@ -19,6 +30,8 @@ def ensure_artifact_dir(repo: Path | None = None) -> Path:
 
 
 def read_json(path: Path) -> Any:
+    if not path.exists():
+        raise ArtifactError(f"required JSON artifact missing: {path}")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -30,7 +43,7 @@ def write_json(path: Path, payload: Any) -> None:
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     if not path.exists():
-        return records
+        raise ArtifactError(f"required JSONL artifact missing: {path}")
     for line in path.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
         if stripped:
@@ -42,4 +55,3 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [json.dumps(row, sort_keys=True) for row in rows]
     path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
-

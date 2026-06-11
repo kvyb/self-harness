@@ -9,6 +9,14 @@ Artifacts live in the target repo under `.self-harness/`.
   "purpose": "string",
   "value": ["string"],
   "audiences": ["string"],
+  "audience_portraits": [
+    {
+      "name": "string",
+      "audience": "string",
+      "hidden_goal": "string",
+      "pressure": "string"
+    }
+  ],
   "target_failures": ["string"],
   "entrypoints": ["string"],
   "editable_surfaces": ["string"],
@@ -30,6 +38,23 @@ Artifacts live in the target repo under `.self-harness/`.
   "heldout": false,
   "success_checks": [],
   "failure_checks": []
+}
+```
+
+## SimulationCase
+
+```json
+{
+  "case_id": "string",
+  "split": "held_in|held_out",
+  "cluster_id": "string",
+  "entrypoint": "api|cli|browser|webhook|worker|eval_runner",
+  "run_command_or_url": "string",
+  "simulator_prompt": "string",
+  "max_turns": 8,
+  "timeout_seconds": 600,
+  "verifier": {"type": "deterministic|llm_judge", "config_ref": "string"},
+  "trace_capture": ["transcript", "tool_calls", "logs", "state_refs"]
 }
 ```
 
@@ -67,7 +92,12 @@ Artifacts live in the target repo under `.self-harness/`.
   "proposed_change": "string",
   "expected_effect": "string",
   "regression_risk": "string",
+  "target_files": [],
+  "exact_amendments": [],
+  "unified_diff": "optional string",
+  "addressability_reason": "string",
+  "validation_plan": [],
+  "predicted_delta": {"held_in": 0, "held_out": 0},
   "status": "proposed|implemented|validated|rejected|not_validated"
 }
 ```
-

@@ -14,6 +14,7 @@ phi(trace) = (terminal_cause, causal_status, agent_mechanism)
 ```
 
 - Harness Proposal creates diverse, minimal candidate edits tied to one failure mechanism and one declared editable surface.
+- Before proposing, mark each cluster addressable only when a declared editable surface can plausibly change the failing mechanism without a broad rewrite.
 - Proposal Validation accepts only non-regressive improvements:
 
 ```text
@@ -27,4 +28,3 @@ If stochastic, repeat and aggregate.
 ## Skill Adaptation
 
 This skill does not mutate the target repo by default. Before owner approval, candidates are `proposed`. After code changes are applied and rerun, candidates can be `validated` only if the paper gate passes.
-

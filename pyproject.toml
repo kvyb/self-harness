@@ -7,8 +7,18 @@ requires-python = ">=3.11"
 license = "MIT"
 
 [project.scripts]
-self-harness = "tools.self_harness.cli:main"
+self-harness = "self_harness.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+self_harness = "tools/self_harness"
+
+[tool.setuptools.packages.find]
+where = ["tools"]
+include = ["self_harness*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

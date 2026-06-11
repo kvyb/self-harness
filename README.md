@@ -54,7 +54,11 @@ The agent should then create or update:
 ```text
 .self-harness/
   intent.json
+  audience-confirmation.md
+  owner-confirmation.json
   simulation-suite.json
+  held-in-suite.json
+  held-out-suite.json
   traces.jsonl
   evidence-bundle.json
   proposals.md

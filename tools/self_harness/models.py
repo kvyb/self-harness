@@ -16,6 +16,7 @@ class HarnessIntent:
     entrypoints: list[str]
     editable_surfaces: list[str]
     confidence: float
+    audience_portraits: list[dict[str, str]] = field(default_factory=list)
     questions: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -33,6 +34,23 @@ class SimulationCluster:
     heldout: bool
     success_checks: list[str]
     failure_checks: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class SimulationCase:
+    case_id: str
+    split: Literal["held_in", "held_out"]
+    cluster_id: str
+    entrypoint: str
+    run_command_or_url: str
+    simulator_prompt: str
+    max_turns: int
+    timeout_seconds: int
+    verifier: dict[str, str]
+    trace_capture: list[str]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -74,6 +92,8 @@ class FailureCluster:
     trace_ids: list[str]
     representative_trace_ids: list[str]
     support: int
+    addressable: bool = False
+    addressability_reason: str = "not yet mapped to a declared editable surface"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -88,6 +108,12 @@ class ProposalBundle:
     proposed_change: str
     expected_effect: str
     regression_risk: str
+    target_files: list[str] = field(default_factory=list)
+    exact_amendments: list[str] = field(default_factory=list)
+    unified_diff: str = ""
+    addressability_reason: str = ""
+    validation_plan: list[str] = field(default_factory=list)
+    predicted_delta: dict[str, int] = field(default_factory=lambda: {"held_in": 0, "held_out": 0})
     status: str = "proposed"
 
     def to_dict(self) -> dict[str, Any]:
@@ -99,4 +125,3 @@ REQUIRED_QUESTIONS = [
     "What value should it deliver?",
     "What difficulties or failures should it solve?",
 ]
-
