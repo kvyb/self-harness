@@ -1,0 +1,7 @@
+interface:
+  display_name: "Self-Harness"
+  short_description: "Improve agent harnesses with live simulations"
+  default_prompt: "Use $self-harness to evaluate this agent harness with simulated users."
+policy:
+  allow_implicit_invocation: true
+

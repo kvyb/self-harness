@@ -1,0 +1,29 @@
+{
+  "name": "self-harness",
+  "version": "0.1.0",
+  "description": "Portable agent skill for improving agent harnesses with live simulated users and Self-Harness trace mining.",
+  "author": {
+    "name": "kvyb",
+    "url": "https://github.com/kvyb"
+  },
+  "homepage": "https://github.com/kvyb/self-harness",
+  "repository": "https://github.com/kvyb/self-harness",
+  "license": "MIT",
+  "keywords": ["agents", "evals", "observability", "self-harness", "simulations"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Self-Harness",
+    "shortDescription": "Improve agent harnesses with simulated users.",
+    "longDescription": "Runs a paper-grounded Self-Harness workflow inside target repos: infer harness purpose, confirm audience, simulate representative AI users, mine traces, propose code changes, and validate owner-approved changes.",
+    "developerName": "kvyb",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Code Review", "Testing"],
+    "websiteURL": "https://github.com/kvyb/self-harness",
+    "defaultPrompt": [
+      "Use Self-Harness to evaluate this agent harness.",
+      "Simulate realistic users and propose harness improvements.",
+      "Mine traces from this agent and find failure clusters."
+    ]
+  }
+}
+
