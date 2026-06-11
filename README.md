@@ -34,6 +34,18 @@ Most teams notice these failures one at a time. Self-Harness turns them into a r
 
 ## How to use it
 
+Install it by giving your agent this repo URL:
+
+```text
+https://github.com/kvyb/self-harness
+```
+
+Ask the agent to unpack it as a skill and install or reference `skills/self-harness/SKILL.md` from the target repo you want to improve. In Codex, Claude Code, or Hermes, the fastest path is usually:
+
+```text
+Install the Self-Harness skill from https://github.com/kvyb/self-harness, then run it in this repo.
+```
+
 Invoke the skill from inside a target harness repo:
 
 ```text
