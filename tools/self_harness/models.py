@@ -16,6 +16,7 @@ class HarnessIntent:
     entrypoints: list[str]
     editable_surfaces: list[str]
     confidence: float
+    observability_sources: list[str] = field(default_factory=list)
     audience_portraits: list[dict[str, str]] = field(default_factory=list)
     questions: list[str] = field(default_factory=list)
 

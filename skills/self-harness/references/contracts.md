@@ -19,6 +19,7 @@ Artifacts live in the target repo under `.self-harness/`.
   ],
   "target_failures": ["string"],
   "entrypoints": ["string"],
+  "observability_sources": ["string"],
   "editable_surfaces": ["string"],
   "confidence": 0.0,
   "questions": ["string"]

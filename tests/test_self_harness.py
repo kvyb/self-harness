@@ -99,6 +99,7 @@ def _sample_intent() -> HarnessIntent:
         target_failures=["missed tool evidence"],
         entrypoints=["pyproject:eval:evaluate"],
         editable_surfaces=["src/agent/prompts.py"],
+        observability_sources=["local JSONL traces"],
         confidence=0.8,
         audience_portraits=[
             {

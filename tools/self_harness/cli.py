@@ -152,6 +152,7 @@ def _intent_template() -> dict[str, object]:
         "target_failures": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
         "entrypoints": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
         "editable_surfaces": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
+        "observability_sources": ["HOST_AGENT_FILL_FROM_REPO_EVIDENCE"],
         "confidence": 0.0,
         "audience_portraits": [
             {
