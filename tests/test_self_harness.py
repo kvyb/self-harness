@@ -21,12 +21,15 @@ class SelfHarnessTests(unittest.TestCase):
         self.assertTrue(intent.questions)
         self.assertTrue(intent.audience_portraits)
 
-    def test_discovery_infers_persona_audience_portraits(self) -> None:
+    def test_discovery_infers_audience_portraits_from_repo_text(self) -> None:
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname)
-            (path / "README.md").write_text("Persona agent for users with memory continuity.", encoding="utf-8")
+            (path / "README.md").write_text(
+                "A workflow agent for expert operators with memory continuity.",
+                encoding="utf-8",
+            )
             intent = discover(path)
-        self.assertIn("user", intent.audiences)
+        self.assertIn("expert operators", intent.audiences)
         self.assertTrue(intent.audience_portraits)
 
     def test_simulation_clusters_include_heldout(self) -> None:
